@@ -1,0 +1,9 @@
+{
+  "name": "client",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "typecheck": "echo 'client: no TS in phase 1'",
+    "test": "echo 'client: no tests in phase 1'"
+  }
+}
