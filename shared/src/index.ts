@@ -6,5 +6,30 @@ export { computeScore } from "./scoring.js";
 export type { ScoreInput, ScoreResult } from "./scoring.js";
 export { shiftValue, buildCode } from "./cipher.js";
 export type { CipherInput, OrderInput } from "./cipher.js";
-export { tokenise } from "./nlp/index.js";
-export type { Token, TokenKind } from "./nlp/index.js";
+export {
+  tokenise,
+  normalise,
+  normaliseWord,
+  splitTerms,
+  isStopword,
+  STOPWORDS,
+  TfIdfIndex,
+  getTokensInRange,
+  getTextFromRange,
+  createEntityDraft,
+} from "./nlp/index.js";
+export type {
+  Token,
+  TokenKind,
+  IndexableDocument,
+  SearchMatch,
+  EntityType,
+  EntityDraft,
+} from "./nlp/index.js";
+export type {
+  SessionStatus,
+  HintSnapshot,
+  EvidenceSnapshot,
+  ResultSnapshot,
+  SessionSnapshot,
+} from "./session.js";

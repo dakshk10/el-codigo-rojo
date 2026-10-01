@@ -1,0 +1,43 @@
+@import "@fontsource/bebas-neue/index.css";
+@import "@fontsource-variable/inter/index.css";
+@import "@fontsource/jetbrains-mono/index.css";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg: #0B0B0B;
+  --panel: #141414;
+  --line: #2A2A2A;
+  --paper: #E8E2D6;
+  --ink: #1A1A1A;
+  --muted: #8A8578;
+  --red: #B00020;
+  --red-bright: #C1121F;
+  --red-text: #FF4D5E;
+  --amber: #D9A441;
+  --green: #5FBF7F;
+}
+
+body {
+  margin: 0;
+  background-color: var(--bg);
+  color: var(--paper);
+  font-family: "Inter Variable", Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  min-height: 100vh;
+}
+
+/* Reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
