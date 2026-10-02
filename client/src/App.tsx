@@ -8,6 +8,7 @@ import { EvidenceBoard } from "./views/EvidenceBoard.js";
 import { CipherTerminal } from "./views/CipherTerminal.js";
 import { VaultKeypad } from "./views/VaultKeypad.js";
 import { ResultScreen } from "./views/ResultScreen.js";
+import { AdminScreen } from "./views/AdminScreen.js";
 import { Timer } from "./components/timer/Timer.js";
 import { ProjectedScore } from "./components/scoring/ProjectedScore.js";
 import { ReconnectBanner } from "./components/common/ReconnectBanner.js";
@@ -73,6 +74,12 @@ export const App: React.FC = () => {
   const renderContent = () => {
     if (!eventCodeVerified) {
       return <EventGate onSuccess={handleEventSuccess} />;
+    }
+
+    // Admin screen: accessible via #admin regardless of session/event gate
+    const hashCheck = typeof window !== "undefined" ? window.location.hash.toLowerCase() : "";
+    if (hashCheck === "#admin") {
+      return <AdminScreen />;
     }
 
     if (!session) {

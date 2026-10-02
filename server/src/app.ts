@@ -12,6 +12,7 @@ import { checkTransformation } from "./services/check.js";
 import { submitCode } from "./services/submit.js";
 import { checkRateLimit } from "./services/rateLimit.js";
 import { saveWorkspace } from "./services/workspace.js";
+import { getLeaderboard, resetTeamSession, exportCsv } from "./services/admin.js";
 import { z } from "zod";
 
 const SESSION_COOKIE = "ecr_session";
@@ -333,6 +334,50 @@ export function buildApp(db: Kysely<Database>): express.Application {
       return;
     }
     res.json({ result: "DENIED", attemptsRemaining: result.attemptsRemaining });
+  });
+
+  // ── Admin middleware ───────────────────────────────────────────────────────
+  function requireAdmin(
+    req: express.Request,
+    res: express.Response,
+    next: express.NextFunction,
+  ): void {
+    const token = req.headers["x-admin-token"];
+    if (!token || token !== config.ADMIN_TOKEN) {
+      sendError(res, 401, "UNAUTHORIZED", "Invalid or missing admin token");
+      return;
+    }
+    next();
+  }
+
+  // ── GET /api/admin/leaderboard ─────────────────────────────────────────────
+  app.get("/api/admin/leaderboard", requireAdmin, async (_req, res): Promise<void> => {
+    const rows = await getLeaderboard(db);
+    res.json({ leaderboard: rows });
+  });
+
+  // ── POST /api/admin/reset/:teamName ────────────────────────────────────────
+  app.post("/api/admin/reset/:teamName", requireAdmin, async (req, res): Promise<void> => {
+    const body = z.object({ confirm: z.literal(true) }).safeParse(req.body);
+    if (!body.success) {
+      sendError(res, 400, "BAD_REQUEST", "confirm: true required");
+      return;
+    }
+    const teamName = decodeURIComponent(req.params["teamName"]!);
+    const result = await resetTeamSession(db, teamName);
+    if (result.kind === "not_found") {
+      sendError(res, 404, "NOT_FOUND", "Team not found");
+      return;
+    }
+    res.json({ ok: true });
+  });
+
+  // ── GET /api/admin/export.csv ──────────────────────────────────────────────
+  app.get("/api/admin/export.csv", requireAdmin, async (_req, res): Promise<void> => {
+    const csv = await exportCsv(db);
+    res.setHeader("Content-Type", "text/csv");
+    res.setHeader("Content-Disposition", "attachment; filename=results.csv");
+    res.send(csv);
   });
 
   return app;
