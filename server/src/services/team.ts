@@ -1,6 +1,7 @@
 import { randomBytes, scrypt, timingSafeEqual } from "node:crypto";
 import type { Kysely } from "kysely";
 import type { Database } from "../db.js";
+import { getTeamsMap } from "../challenge.js";
 
 const SCRYPT_KEYLEN = 64;
 
@@ -50,7 +51,8 @@ export type TeamEntryResult =
   | { kind: "resumed"; teamId: string; sessionId: string }
   | { kind: "name_taken" }
   | { kind: "wrong_passcode" }
-  | { kind: "invalid_input"; message: string };
+  | { kind: "invalid_input"; message: string }
+  | { kind: "team_not_registered" };
 
 export async function enterTeam(
   db: Kysely<Database>,
@@ -62,6 +64,18 @@ export async function enterTeam(
   }
   if (!validatePasscode(passcode)) {
     return { kind: "invalid_input", message: "Passcode must be exactly 4 digits" };
+  }
+
+  const teamsMap = getTeamsMap();
+  const hasRegisteredTeams = Object.keys(teamsMap).length > 0;
+  let gatewayTeamId: string | null = null;
+  if (hasRegisteredTeams) {
+    const trimmed = name.trim();
+    const match = teamsMap[trimmed] ?? teamsMap[name];
+    if (!match) {
+      return { kind: "team_not_registered" };
+    }
+    gatewayTeamId = match;
   }
 
   const nameLower = name.toLowerCase().trim();
@@ -82,6 +96,16 @@ export async function enterTeam(
       existing.passcode_salt as Buffer,
     );
     if (!ok) return { kind: "wrong_passcode" };
+
+    if (gatewayTeamId) {
+      await db
+        .updateTable("sessions")
+        .set({ gateway_team_id: gatewayTeamId })
+        .where("id", "=", existing.session_id)
+        .where("gateway_team_id", "is", null)
+        .execute();
+    }
+
     return { kind: "resumed", teamId: existing.id, sessionId: existing.session_id };
   }
 
@@ -107,6 +131,7 @@ export async function enterTeam(
         .insertInto("sessions")
         .values({
           team_id: team.id,
+          gateway_team_id: gatewayTeamId,
           status: "NOT_STARTED",
           checks_used: 0,
           attempts_used: 0,

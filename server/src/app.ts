@@ -84,6 +84,10 @@ export function buildApp(db: Kysely<Database>): express.Application {
 
       const result = await enterTeam(db, body.data.teamName, body.data.passcode);
 
+      if (result.kind === "team_not_registered") {
+        sendError(res, 400, "TEAM_NOT_REGISTERED", "This team name is not on the event list.");
+        return;
+      }
       if (result.kind === "invalid_input") {
         sendError(res, 400, "INVALID_INPUT", result.message);
         return;

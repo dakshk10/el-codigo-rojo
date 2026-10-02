@@ -66,3 +66,23 @@ export function computeScore(input: ScoreInput): ScoreResult {
     effectiveSeconds: effective,
   };
 }
+
+/**
+ * Maps the internal raw score (0–1050) to the outward-facing display scale (0–10).
+ * Uses the constants raw_max and display_max from scoring configuration.
+ * Formula: Math.round((rawScore / raw_max) * display_max), clamped to [0, display_max].
+ */
+export function normaliseScore(
+  rawScore: number,
+  scoring?: { raw_max?: number; display_max?: number }
+): number {
+  const rawMax = scoring?.raw_max ?? 1050;
+  const displayMax = scoring?.display_max ?? 10;
+
+  if (rawMax <= 0) return 0;
+
+  const unrounded = (rawScore / rawMax) * displayMax;
+  const rounded = Math.round(unrounded);
+  return Math.min(displayMax, Math.max(0, rounded));
+}
+

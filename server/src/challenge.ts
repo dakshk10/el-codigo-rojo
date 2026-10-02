@@ -49,9 +49,32 @@ export function getServerChallenge(): ServerChallenge {
 export function resetChallenge(): void {
   _public = null;
   _server = null;
+  _teams = null;
+}
+
+let _teams: Record<string, string> | null = null;
+
+/** Load and return challenge/teams.json team ID map. */
+export function getTeamsMap(): Record<string, string> {
+  if (_teams !== null) return _teams;
+  const root = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
+  try {
+    const raw = readFileSync(resolve(root, "challenge/teams.json"), "utf8");
+    _teams = JSON.parse(raw);
+  } catch {
+    _teams = {};
+  }
+  return _teams!;
+}
+
+/** Set or override teams map (for testing). */
+export function setTeamsMapForTesting(map: Record<string, string> | null): void {
+  _teams = map;
 }
 
 /** Load and validate both challenge files — call at startup. */
 export function validateChallenge(): void {
   load();
+  getTeamsMap();
 }
+

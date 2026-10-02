@@ -6,6 +6,9 @@ const EnvSchema = z.object({
   EVENT_CODE: z.string().min(1).default("dev-event-code"),
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
   PORT: z.coerce.number().int().positive().default(3001),
+  GATEWAY_BASE_URL: z.string().default(""),
+  GATEWAY_GAME_KEY: z.string().default("dev-gateway-key"),
+  GATEWAY_LOG_PATH: z.string().default("logs/gateway-events.ndjson"),
 });
 
 function loadConfig() {

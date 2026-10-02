@@ -386,6 +386,8 @@
     "speed_bonus_fraction": 0.5,
     "check_limit": 3,
     "check_penalty_seconds": 30,
-    "attempt_limit": 3
+    "attempt_limit": 3,
+    "raw_max": 1050,
+    "display_max": 10
   }
 }

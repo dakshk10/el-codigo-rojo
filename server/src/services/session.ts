@@ -10,6 +10,7 @@ import type {
   ResultSnapshot,
   SessionSnapshot,
 } from "shared";
+import { normaliseScore } from "shared";
 import { parseJsonb } from "../jsonb.js";
 
 export type {
@@ -105,7 +106,7 @@ export async function getSessionSnapshot(
   let result: ResultSnapshot | null = null;
   if (["SOLVED", "EXPIRED", "LOCKED_OUT"].includes(status)) {
     result = {
-      score: row.final_score ?? 0,
+      score: row.final_score !== null ? normaliseScore(row.final_score, srv.scoring) : 0,
       elapsedSeconds: row.final_seconds ?? 0,
       hintsUsed: hintsUsed.length,
       wrongAttempts: row.wrong_attempts,

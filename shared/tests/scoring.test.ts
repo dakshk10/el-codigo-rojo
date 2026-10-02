@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { computeScore } from "../src/scoring.js";
+import { computeScore, normaliseScore } from "../src/scoring.js";
 import type { Scoring } from "../src/schemas/server.js";
 
 const scoring: Scoring = {
@@ -11,6 +11,8 @@ const scoring: Scoring = {
   check_limit: 3,
   check_penalty_seconds: 30,
   attempt_limit: 3,
+  raw_max: 1050,
+  display_max: 10,
 };
 
 describe("scoring", () => {
@@ -108,4 +110,27 @@ describe("scoring", () => {
     });
     expect(result.effectiveSeconds).toBe(900);
   });
+
+  describe("normaliseScore", () => {
+    it("normalises 1050 to 10", () => {
+      expect(normaliseScore(1050)).toBe(10);
+      expect(normaliseScore(1050, scoring)).toBe(10);
+    });
+
+    it("normalises 594 to 6", () => {
+      expect(normaliseScore(594)).toBe(6);
+      expect(normaliseScore(594, scoring)).toBe(6);
+    });
+
+    it("normalises 0 to 0", () => {
+      expect(normaliseScore(0)).toBe(0);
+      expect(normaliseScore(0, scoring)).toBe(0);
+    });
+
+    it("clamps scores outside range [0, 10]", () => {
+      expect(normaliseScore(-10)).toBe(0);
+      expect(normaliseScore(2000)).toBe(10);
+    });
+  });
 });
+

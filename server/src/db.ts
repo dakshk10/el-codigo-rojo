@@ -35,6 +35,7 @@ export interface SessionsTable {
   submitted_at: ColumnType<Date | null, Date | null | undefined, Date | null>;
   final_score: ColumnType<number | null, number | null | undefined, number | null>;
   final_seconds: ColumnType<number | null, number | null | undefined, number | null>;
+  gateway_team_id: ColumnType<string | null, string | null | undefined, string | null>;
   created_at: ColumnType<Date, never, never>;
 }
 

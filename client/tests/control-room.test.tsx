@@ -283,6 +283,8 @@ describe("Phase 3 Verification: Control Room & Investigation Tools", () => {
         check_penalty_seconds: 30,
         attempt_limit: 3,
         check_limit: 3,
+        raw_max: 1050,
+        display_max: 10,
       },
       usedHintMultipliers: [0.95],
       durationSeconds: 900,

@@ -2,6 +2,7 @@ import type { Kysely } from "kysely";
 import type { Database } from "../db.js";
 import type { ServerChallenge } from "shared";
 import { parseJsonb } from "../jsonb.js";
+import { sendGatewayEvent } from "./gatewayClient.js";
 
 export type HintResult =
   | { kind: "ok"; text: string }
@@ -18,19 +19,22 @@ export async function useHint(
   const hint = srv.hints.find((h) => h.id === hintId);
   if (!hint) return { kind: "not_found" };
 
-  return db.transaction().execute(async (trx) => {
+  let gatewayTeamId: string | null = null;
+
+  const result = await db.transaction().execute(async (trx) => {
     const row = await trx
       .selectFrom("sessions")
       .where("id", "=", sessionId)
       .forUpdate()
-      .select(["status", "hints_used"])
+      .select(["status", "hints_used", "gateway_team_id"])
       .executeTakeFirst();
 
-    if (!row || row.status !== "ACTIVE") return { kind: "session_not_active" };
+    if (!row || row.status !== "ACTIVE") return { kind: "session_not_active" as const };
 
     const hintsUsed: number[] = parseJsonb<number[]>(row.hints_used);
-    if (hintsUsed.includes(hintId)) return { kind: "already_used" };
+    if (hintsUsed.includes(hintId)) return { kind: "already_used" as const };
 
+    gatewayTeamId = row.gateway_team_id ?? null;
     const updated = [...hintsUsed, hintId];
     await trx
       .updateTable("sessions")
@@ -38,6 +42,17 @@ export async function useHint(
       .where("id", "=", sessionId)
       .execute();
 
-    return { kind: "ok", text: hint.text };
+    return { kind: "ok" as const, text: hint.text };
   });
+
+  if (result.kind === "ok") {
+    sendGatewayEvent({
+      type: "hint_used",
+      points: 0,
+      team_id: gatewayTeamId,
+    });
+  }
+
+  return result;
 }
+

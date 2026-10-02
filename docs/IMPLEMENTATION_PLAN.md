@@ -14,7 +14,9 @@ Section references: `PRD §n` = `docs/PRD.md`, `UX §n` = `docs/UI_UX.md`.
 |---|---|
 | `challenge/public.json` | Player-facing evidence, unlock graph, duration |
 | `challenge/server.json` | Private facts, solution, hint text, scoring constants |
+| `challenge/teams.json` | Read-only team ID mapping `{ "Team Name": "T01", ... }` provided by gateway organiser |
 | `scripts/verify-challenge.mjs` | Must pass at every phase: `node scripts/verify-challenge.mjs` |
+
 
 ## 1. Target Repository Layout
 
