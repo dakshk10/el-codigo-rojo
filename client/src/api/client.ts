@@ -1,4 +1,4 @@
-import type { SessionSnapshot } from "shared";
+import type { SessionSnapshot, Token } from "shared";
 
 export class ApiError extends Error {
   public status: number;
@@ -42,6 +42,11 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
   return (await res.json()) as T;
 }
 
+export interface EvidenceResponse {
+  tokens: Token[];
+  metadata: Record<string, string>;
+}
+
 export const api = {
   verifyEventCode: async (code: string): Promise<{ ok: boolean }> => {
     return request<{ ok: boolean }>("/api/event/verify", {
@@ -71,4 +76,25 @@ export const api = {
       method: "POST",
     });
   },
+
+  fetchEvidence: async (id: string): Promise<EvidenceResponse> => {
+    return request<EvidenceResponse>(`/api/evidence/${id}`, {
+      method: "GET",
+    });
+  },
+
+  useHint: async (id: number): Promise<{ text: string }> => {
+    return request<{ text: string }>(`/api/session/hints/${id}/use`, {
+      method: "POST",
+      body: JSON.stringify({ confirm: true }),
+    });
+  },
+
+  putWorkspace: async (workspace: Record<string, unknown>): Promise<{ ok: boolean }> => {
+    return request<{ ok: boolean }>("/api/session/workspace", {
+      method: "PUT",
+      body: JSON.stringify(workspace),
+    });
+  },
 };
+

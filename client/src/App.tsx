@@ -3,7 +3,9 @@ import { useSessionStore } from "./store/sessionStore.js";
 import { EventGate } from "./views/EventGate.js";
 import { TeamEntry } from "./views/TeamEntry.js";
 import { Briefing } from "./views/Briefing.js";
+import { ControlRoom } from "./views/ControlRoom.js";
 import { Timer } from "./components/timer/Timer.js";
+import { ProjectedScore } from "./components/scoring/ProjectedScore.js";
 import { ReconnectBanner } from "./components/common/ReconnectBanner.js";
 import { ToastContainer, type ToastMessage } from "./components/common/Toast.js";
 
@@ -93,38 +95,8 @@ export const App: React.FC = () => {
       );
     }
 
-    // Active or terminal session view (Phase 2 shell)
-    return (
-      <main className="max-w-6xl mx-auto px-4 py-8">
-        <div className="bg-panel border border-line p-8 shadow-2xl relative">
-          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border-b border-line pb-6 mb-6">
-            <div>
-              <p className="font-mono text-xs text-muted tracking-widest uppercase mb-1">
-                OPERATION ACTIVE // VAULT LEVEL
-              </p>
-              <h2 className="font-display text-3xl tracking-wider text-paper">
-                CONTROL ROOM
-              </h2>
-            </div>
-            <div className="flex items-center gap-3">
-              <span className="font-mono text-xs text-muted">TEAM:</span>
-              <span className="font-mono text-xs font-bold text-paper border border-line px-2.5 py-1 bg-bg">
-                {session.team.name}
-              </span>
-            </div>
-          </div>
-
-          <div className="p-6 bg-bg border border-line font-mono text-sm space-y-4">
-            <p className="text-amber">
-              [PHASE 2 WORKSPACE SHELL] Operation begun. Autorun timer active.
-            </p>
-            <p className="text-muted text-xs">
-              Evidence documents and investigation tools unlock in Phase 3.
-            </p>
-          </div>
-        </div>
-      </main>
-    );
+    // Active session view: Control Room (Phase 3)
+    return <ControlRoom />;
   };
 
   const showTopBar = session && session.status !== "NOT_STARTED";
@@ -135,7 +107,7 @@ export const App: React.FC = () => {
 
       {/* Top Header Bar when session is in play */}
       {showTopBar && (
-        <header className="border-b border-line bg-panel px-6 py-3 flex items-center justify-between z-30 sticky top-0">
+        <header className="border-b border-line bg-panel px-6 py-2.5 flex items-center justify-between z-30 sticky top-0 shrink-0">
           <div className="flex items-center gap-3">
             <h1 className="font-display text-xl tracking-widest text-paper">
               EL CÓDIGO ROJO
@@ -143,9 +115,16 @@ export const App: React.FC = () => {
             <span className="hidden sm:inline font-mono text-xs text-muted border-l border-line pl-3">
               PHASE 1 // ROYAL MINT
             </span>
+            <span className="font-mono text-xs text-muted border-l border-line pl-3">
+              CONTROL ROOM
+            </span>
           </div>
 
           <div className="flex items-center gap-4">
+            <span className="font-mono text-xs font-bold text-paper border border-line px-2.5 py-1 bg-bg">
+              {session.team.name}
+            </span>
+            <ProjectedScore session={session} />
             <Timer onShowToast={addToast} />
           </div>
         </header>

@@ -11,6 +11,7 @@ import { useHint } from "./services/hint.js";
 import { checkTransformation } from "./services/check.js";
 import { submitCode } from "./services/submit.js";
 import { checkRateLimit } from "./services/rateLimit.js";
+import { saveWorkspace } from "./services/workspace.js";
 import { z } from "zod";
 
 const SESSION_COOKIE = "ecr_session";
@@ -28,7 +29,7 @@ function sendError(res: express.Response, status: number, code: string, message:
 
 export function buildApp(db: Kysely<Database>): express.Application {
   const app = express();
-  app.use(express.json());
+  app.use(express.json({ limit: "256kb" }));
   app.use(cookieParser());
 
   // ── Health ─────────────────────────────────────────────────────────────────
@@ -153,6 +154,24 @@ export function buildApp(db: Kysely<Database>): express.Application {
       return;
     }
     res.json({ tokens: result.tokens, metadata: result.metadata });
+  });
+
+  // ── PUT /api/session/workspace ─────────────────────────────────────────────
+  app.put("/api/session/workspace", requireSession, async (req, res): Promise<void> => {
+    const result = await saveWorkspace(db, req.sessionId!, req.body);
+    if (result.kind === "invalid_input") {
+      sendError(res, 400, "BAD_REQUEST", "Workspace body must be a JSON object");
+      return;
+    }
+    if (result.kind === "too_large") {
+      sendError(res, 413, "PAYLOAD_TOO_LARGE", "Workspace data exceeds 128 KB cap");
+      return;
+    }
+    if (result.kind === "not_found") {
+      sendError(res, 404, "NOT_FOUND", "Session not found");
+      return;
+    }
+    res.json({ ok: true });
   });
 
   // ── POST /api/session/hints/:n/use ────────────────────────────────────────
