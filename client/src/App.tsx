@@ -4,6 +4,10 @@ import { EventGate } from "./views/EventGate.js";
 import { TeamEntry } from "./views/TeamEntry.js";
 import { Briefing } from "./views/Briefing.js";
 import { ControlRoom } from "./views/ControlRoom.js";
+import { EvidenceBoard } from "./views/EvidenceBoard.js";
+import { CipherTerminal } from "./views/CipherTerminal.js";
+import { VaultKeypad } from "./views/VaultKeypad.js";
+import { ResultScreen } from "./views/ResultScreen.js";
 import { Timer } from "./components/timer/Timer.js";
 import { ProjectedScore } from "./components/scoring/ProjectedScore.js";
 import { ReconnectBanner } from "./components/common/ReconnectBanner.js";
@@ -95,11 +99,40 @@ export const App: React.FC = () => {
       );
     }
 
-    // Active session view: Control Room (Phase 3)
+    // Terminal status: auto-navigate to ResultScreen
+    if (["SOLVED", "EXPIRED", "LOCKED_OUT"].includes(session.status)) {
+      return <ResultScreen />;
+    }
+
+    // Active session views by hash
+    const hash = typeof window !== "undefined" ? window.location.hash.toLowerCase() : "";
+    if (hash === "#board") {
+      return <EvidenceBoard />;
+    }
+    if (hash === "#cipher") {
+      return <CipherTerminal />;
+    }
+    if (hash === "#vault") {
+      return <VaultKeypad />;
+    }
+
     return <ControlRoom />;
   };
 
   const showTopBar = session && session.status !== "NOT_STARTED";
+  const isTerminal = session && ["SOLVED", "EXPIRED", "LOCKED_OUT"].includes(session.status);
+
+  const hash = typeof window !== "undefined" ? window.location.hash.toLowerCase() : "";
+  let subheader = "CONTROL ROOM";
+  if (isTerminal) {
+    subheader = "MISSION DEBRIEF";
+  } else if (hash === "#board") {
+    subheader = "EVIDENCE BOARD";
+  } else if (hash === "#cipher") {
+    subheader = "CIPHER TERMINAL";
+  } else if (hash === "#vault") {
+    subheader = "VAULT KEYPAD";
+  }
 
   return (
     <div className="min-h-screen bg-bg text-paper flex flex-col font-sans">
@@ -116,7 +149,7 @@ export const App: React.FC = () => {
               PHASE 1 // ROYAL MINT
             </span>
             <span className="font-mono text-xs text-muted border-l border-line pl-3">
-              CONTROL ROOM
+              {subheader}
             </span>
           </div>
 
@@ -124,7 +157,7 @@ export const App: React.FC = () => {
             <span className="font-mono text-xs font-bold text-paper border border-line px-2.5 py-1 bg-bg">
               {session.team.name}
             </span>
-            <ProjectedScore session={session} />
+            {!isTerminal && <ProjectedScore session={session} />}
             <Timer onShowToast={addToast} />
           </div>
         </header>

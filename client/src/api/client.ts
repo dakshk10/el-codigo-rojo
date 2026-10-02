@@ -96,5 +96,27 @@ export const api = {
       body: JSON.stringify(workspace),
     });
   },
+
+  checkTransformation: async (
+    values: string[]
+  ): Promise<{ valid: boolean; checksRemaining: number }> => {
+    return request<{ valid: boolean; checksRemaining: number }>("/api/session/check", {
+      method: "POST",
+      body: JSON.stringify({ values }),
+    });
+  },
+
+  submitCode: async (
+    code: string,
+    idempotencyKey: string
+  ): Promise<{ result: "GRANTED" | "DENIED"; attemptsRemaining?: number }> => {
+    return request<{ result: "GRANTED" | "DENIED"; attemptsRemaining?: number }>(
+      "/api/session/submit",
+      {
+        method: "POST",
+        body: JSON.stringify({ code, idempotencyKey }),
+      }
+    );
+  },
 };
 

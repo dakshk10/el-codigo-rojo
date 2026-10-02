@@ -18,11 +18,32 @@ export interface PinnedEntity {
   type: EntityType;
 }
 
+export interface BoardNode {
+  id: string;
+  type?: string;
+  position: { x: number; y: number };
+  data: {
+    label: string;
+    entityType: EntityType;
+  };
+}
+
+export interface BoardEdge {
+  id: string;
+  source: string;
+  target: string;
+  label: "SEEN AT" | "SCHEDULED ON" | "MENTIONED BY" | "CONNECTED TO";
+}
+
 export interface WorkspaceState {
   reviewed: string[];
   notes: string;
   marks: MarkItem[];
   pinnedEntities: PinnedEntity[];
+  boardNodes: BoardNode[];
+  boardEdges: BoardEdge[];
+  boardHistory: { nodes: BoardNode[]; edges: BoardEdge[] }[];
+  cipherScratchpad: string;
   extra: Record<string, unknown>;
 
   // Sync status
@@ -38,6 +59,10 @@ export interface WorkspaceState {
   removeMark: (markId: string) => void;
   addPinnedEntity: (entity: Omit<PinnedEntity, "id">) => PinnedEntity;
   removePinnedEntity: (id: string) => void;
+  setBoard: (nodes: BoardNode[], edges: BoardEdge[], pushHistory?: boolean) => void;
+  undoBoard: () => void;
+  clearBoard: () => void;
+  setCipherScratchpad: (scratchpad: string) => void;
   dismissSaveError: () => void;
   forceSave: () => Promise<void>;
 }
@@ -61,6 +86,10 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => {
     notes: "",
     marks: [],
     pinnedEntities: [],
+    boardNodes: [],
+    boardEdges: [],
+    boardHistory: [],
+    cipherScratchpad: "",
     extra: {},
     isSaving: false,
     saveError: null,
@@ -86,17 +115,37 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => {
         ? (workspaceData["pinnedEntities"] as PinnedEntity[])
         : get().pinnedEntities;
 
+      const boardNodes = Array.isArray(workspaceData["boardNodes"])
+        ? (workspaceData["boardNodes"] as BoardNode[])
+        : get().boardNodes;
+
+      const boardEdges = Array.isArray(workspaceData["boardEdges"])
+        ? (workspaceData["boardEdges"] as BoardEdge[])
+        : get().boardEdges;
+
+      const cipherScratchpad =
+        typeof workspaceData["cipherScratchpad"] === "string"
+          ? (workspaceData["cipherScratchpad"] as string)
+          : get().cipherScratchpad;
+
       const extra = { ...workspaceData };
       delete extra["reviewed"];
       delete extra["notes"];
       delete extra["marks"];
       delete extra["pinnedEntities"];
+      delete extra["boardNodes"];
+      delete extra["boardEdges"];
+      delete extra["cipherScratchpad"];
 
       set({
         reviewed,
         notes,
         marks,
         pinnedEntities,
+        boardNodes,
+        boardEdges,
+        boardHistory: [],
+        cipherScratchpad,
         extra,
         saveError: null,
       });
@@ -144,6 +193,49 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => {
       triggerDebouncedSave();
     },
 
+    setBoard: (nodes: BoardNode[], edges: BoardEdge[], pushHistory = true) => {
+      set((state) => {
+        const nextHistory = pushHistory
+          ? [...state.boardHistory.slice(-20), { nodes: state.boardNodes, edges: state.boardEdges }]
+          : state.boardHistory;
+        return {
+          boardNodes: nodes,
+          boardEdges: edges,
+          boardHistory: nextHistory,
+        };
+      });
+      triggerDebouncedSave();
+    },
+
+    undoBoard: () => {
+      const state = get();
+      if (state.boardHistory.length === 0) return;
+      const last = state.boardHistory[state.boardHistory.length - 1];
+      if (!last) return;
+      const remainingHistory = state.boardHistory.slice(0, -1);
+      set({
+        boardNodes: last.nodes,
+        boardEdges: last.edges,
+        boardHistory: remainingHistory,
+      });
+      triggerDebouncedSave();
+    },
+
+    clearBoard: () => {
+      const state = get();
+      set({
+        boardHistory: [...state.boardHistory.slice(-20), { nodes: state.boardNodes, edges: state.boardEdges }],
+        boardNodes: [],
+        boardEdges: [],
+      });
+      triggerDebouncedSave();
+    },
+
+    setCipherScratchpad: (scratchpad: string) => {
+      set({ cipherScratchpad: scratchpad });
+      triggerDebouncedSave();
+    },
+
     dismissSaveError: () => {
       set({ saveError: null });
     },
@@ -155,6 +247,9 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => {
         notes: state.notes,
         marks: state.marks,
         pinnedEntities: state.pinnedEntities,
+        boardNodes: state.boardNodes,
+        boardEdges: state.boardEdges,
+        cipherScratchpad: state.cipherScratchpad,
         ...state.extra,
       };
 

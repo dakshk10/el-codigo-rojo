@@ -8,7 +8,7 @@ import { MetadataDrawer } from "../components/evidence/MetadataDrawer.js";
 import { EvidenceSearch } from "../components/evidence/EvidenceSearch.js";
 import { TokenizedDocument } from "../components/evidence/TokenizedDocument.js";
 import { NotesAndPinsPanel } from "../components/workspace/NotesAndPinsPanel.js";
-import { HintDrawer } from "../components/hints/HintDrawer.js";
+import { BottomNav } from "../components/common/BottomNav.js";
 
 interface LoadedDoc {
   id: string;
@@ -35,7 +35,6 @@ export const ControlRoom: React.FC = () => {
   const [loadedDocs, setLoadedDocs] = useState<Record<string, LoadedDoc>>({});
   const [isLoadingDoc, setIsLoadingDoc] = useState(false);
   const [jumpTokenId, setJumpTokenId] = useState<string | null>(null);
-  const [isHintDrawerOpen, setIsHintDrawerOpen] = useState(false);
 
   // Initialize workspace from session snapshot once on load / refresh
   useEffect(() => {
@@ -227,54 +226,10 @@ export const ControlRoom: React.FC = () => {
       </div>
 
       {/* Bottom Navigation Bar */}
-      <footer className="border-t border-line bg-panel px-4 py-2 flex items-center justify-between shrink-0 font-mono text-xs z-20">
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            id="btn-open-hints"
-            onClick={() => setIsHintDrawerOpen(true)}
-            className="px-3 py-1.5 bg-red hover:bg-red-bright text-paper font-bold tracking-wider uppercase rounded-xs transition-colors"
-          >
-            HINTS (
-            {session?.hints.filter((h) => !h.used).length ?? 0} AVAILABLE)
-          </button>
-        </div>
-
-        <div className="flex items-center gap-3 text-muted">
-          <button
-            type="button"
-            disabled
-            className="px-2.5 py-1 border border-line text-muted/50 cursor-not-allowed uppercase"
-            title="Available in Phase 4"
-          >
-            EVIDENCE BOARD
-          </button>
-          <button
-            type="button"
-            disabled
-            className="px-2.5 py-1 border border-line text-muted/50 cursor-not-allowed uppercase"
-            title="Available in Phase 4"
-          >
-            CIPHER TERMINAL
-          </button>
-          <button
-            type="button"
-            disabled
-            className="px-2.5 py-1 border border-line text-muted/50 cursor-not-allowed uppercase"
-            title="Available in Phase 4"
-          >
-            VAULT
-          </button>
-        </div>
-      </footer>
-
-      {/* Hint Drawer */}
-      <HintDrawer
-        hints={session?.hints ?? []}
-        isOpen={isHintDrawerOpen}
-        onClose={() => setIsHintDrawerOpen(false)}
-        onHintUsed={() => {
-          void fetchSession();
+      <BottomNav
+        currentView="control"
+        onNavigate={(view) => {
+          window.location.hash = `#${view}`;
         }}
       />
     </div>
